@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam for HCI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .question {
+            display: none;
+        }
+        .question.active {
+            display: block;
+        }
+        label {
+            margin-top: 3px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #resultContainer {
+            margin-top: 20px;
+        }
+        .result {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+        .home-container {
+            text-align: center;
+        }
+        .slider-label {
+            display: block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="homeContainer" class="home-container">
+            <h1>HCI Exam</h1>
+            <label class="slider-label">Select number of T/F questions:</label>
+            <input type="range" id="tfCount" min="1" max="0" value="5" oninput="updateValue('tfCountValue', this.value)">
+            <span id="tfCountValue">1</span>
+            <br>
+            <label class="slider-label">Select number of Multiple Choice questions:</label>
+            <input type="range" id="mcCount" min="1" max="0" value="5" oninput="updateValue('mcCountValue', this.value)">
+            <span id="mcCountValue">1</span>
+            <br>
+            <button onclick="startExam()">Start the Exam</button>
+        </div>
+        <div id="questionsContainer"></div>
+        <button id="prevBtn" onclick="prevQuestion()" style="display: none;">Previous</button>
+        <button id="nextBtn" onclick="nextQuestion()" style="display: none;">Next</button>
+        <button id="submitBtn" onclick="submitExam()" style="display: none;">Submit</button>
+        <div id="resultContainer"></div>
+    </div>
+    <footer>Developed by Badr El sheshtawy</footer>
+
+    <script>
+      const questions =[
+      // True/False Questions
+{ type: 'tf', question: 'Interaction involves a dialog with feedback and control throughout task performance.', answer: 'T' },
+{ type: 'tf', question: 'Indirect interaction may involve batch processing or intelligent sensors.', answer: 'T' },
+{ type: 'tf', question: 'Norman’s model includes the concept of gulfs of execution.', answer: 'T' },
+{ type: 'tf', question: 'Human error is categorized into slips and mistakes in Norman’s model.', answer: 'T' },
+{ type: 'tf', question: 'The physical environment of interaction includes temperature and lighting.', answer: 'T' },
+{ type: 'tf', question: 'A command line interface is a type of interaction style.', answer: 'T' },
+{ type: 'tf', question: 'Natural language interaction involves question/answer and query dialogs.', answer: 'F' },
+{ type: 'tf', question: 'Point and click is an example of a three-dimensional interface.', answer: 'F' },
+{ type: 'tf', question: 'The main goal of evaluation is to identify problems with the system.', answer: 'T' },
+{ type: 'tf', question: 'Heuristic evaluation was developed by Jakob Nielsen and Rolf Molich.', answer: 'T' },
+{ type: 'tf', question: 'Flexibility and efficiency are part of the heuristic evaluation criteria.', answer: 'T' },
+{ type: 'tf', question: 'Laboratory studies are conducted in the user’s normal work environment.', answer: 'F' },
+{ type: 'tf', question: 'Eye tracking is a method used in monitoring physiological responses during evaluation.', answer: 'T' },
+{ type: 'tf', question: 'Universal design principles were proposed by a group at North Carolina State University.', answer: 'T' },
+{ type: 'tf', question: 'Equitable use means the design is only useful to people with specific abilities.', answer: 'F' },
+{ type: 'tf', question: 'Perceptible information ensures communication regardless of user abilities.', answer: 'T' },
+{ type: 'tf', question: 'Tolerance for error aims to minimize the impact of unintended behavior.', answer: 'T' },
+{ type: 'tf', question: 'Multi-modal interaction includes both speech and non-speech sounds.', answer: 'T' },
+{ type: 'tf', question: 'Kinesthetics is concerned with tactile sensations through the skin.', answer: 'F' },
+{ type: 'tf', question: 'Handwriting recognition is a type of multi-modal interaction.', answer: 'T' },
+{ type: 'tf', question: 'Designing for diversity includes considering users with disabilities.', answer: 'T' },
+{ type: 'tf', question: 'Universal design principles exclude the consideration of cultural differences.', answer: 'F' },
+{ type: 'tf', question: 'Error prevention is a principle of heuristic evaluation.', answer: 'T' },
+{ type: 'tf', question: 'Empirical methods in evaluation include experimental evaluation.', answer: 'T' },
+{ type: 'tf', question: 'Observational techniques in evaluation do not include video recording.', answer: 'F' },
+{ type: 'tf', question: 'Query techniques in evaluation include both interviews and questionnaires.', answer: 'T' },
+{ type: 'tf', question: 'Designing for older people is not part of designing for diversity.', answer: 'F' },
+{ type: 'tf', question: 'Multi-modal interaction can improve usability through audio confirmation.', answer: 'T' },
+{ type: 'tf', question: 'Eye tracking can be used for usability evaluation.', answer: 'T' },
+{ type: 'tf', question: 'Cognitive walkthrough involves evaluating a system based on a list of actions.', answer: 'T' },
+{ type: 'tf', question: 'Kinesthetics involves the perception of movement and position.', answer: 'T' },
+{ type: 'tf', question: 'Speech synthesis is not a component of speech in the interface.', answer: 'F' },
+{ type: 'tf', question: 'The design process should not consider psychological aspects of users.', answer: 'F' },
+{ type: 'tf', question: 'Ergonomics includes the use of color in the physical environment.', answer: 'T' },
+{ type: 'tf', question: 'The golden rule of design is understanding your materials.', answer: 'T' },
+{ type: 'tf', question: 'The core language in interaction refers to natural language.', answer: 'F' },
+{ type: 'tf', question: 'Design constraints include cost and development time.', answer: 'T' },
+{ type: 'tf', question: 'Norman’s model cycle includes forming intentions based on goals.', answer: 'T' },
+{ type: 'tf', question: 'Evaluation through expert analysis does not include cognitive walkthrough.', answer: 'F' },
+{ type: 'tf', question: 'The WIMP interface is a type of three-dimensional interface.', answer: 'F' },
+{ type: 'tf', question: 'Flexibility in use allows for a range of abilities and preferences.', answer: 'T' },
+{ type: 'tf', question: 'Automatic protocol analysis tools are used in observational techniques.', answer: 'T' },
+{ type: 'tf', question: 'Empirical methods do not include hypothesis testing.', answer: 'F' },
+{ type: 'tf', question: 'The design process involves achieving goals within constraints.', answer: 'T' },
+{ type: 'tf', question: 'Human factors in ergonomics include physical position and lighting.', answer: 'T' },
+{ type: 'tf', question: 'Perceptible information is not a principle of universal design.', answer: 'F' },
+{ type: 'tf', question: 'Tolerance for error aims to increase the impact of mistakes.', answer: 'F' },
+{ type: 'tf', question: 'Heuristic evaluation includes using guidelines to find usability issues.', answer: 'T' },
+{ type: 'tf', question: 'A heuristic evaluation is performed by multiple experts.', answer: 'T' },
+{ type: 'tf', question: 'Direct manipulation involves a dialog with the computer through graphical objects.', answer: 'T' },
+{ type: 'tf', question: 'Metaphors in interface design help users understand new systems by relating them to familiar ones.', answer: 'T' },
+{ type: 'tf', question: 'The use of sound in interfaces can enhance or hinder usability depending on its implementation.', answer: 'T' },
+{ type: 'tf', question: 'Flexibility and efficiency of use are not considered in usability heuristics.', answer: 'F' },
+{ type: 'tf', question: 'The physical environment does not affect user interaction with a system.', answer: 'F' },
+{ type: 'tf', question: 'Consistency and standards are important in interface design to prevent user confusion.', answer: 'T' },
+{ type: 'tf', question: 'User-centered design focuses on the needs, wants, and limitations of end-users.', answer: 'T' },
+{ type: 'tf', question: 'Visibility of system status is crucial for keeping users informed about what is going on.', answer: 'T' },
+{ type: 'tf', question: 'The system should always provide feedback within one second.', answer: 'T' },
+{ type: 'tf', question: 'Aesthetic and minimalist design aims to include only the most necessary information.', answer: 'T' },
+{ type: 'tf', question: 'Error recovery should allow users to easily fix mistakes.', answer: 'T' },
+{ type: 'tf', question: 'Design principles are static and do not evolve over time.', answer: 'F' },
+{ type: 'tf', question: 'Usability testing is conducted to observe how real users interact with a system.', answer: 'T' },
+{ type: 'tf', question: 'Good design can significantly reduce the learning curve for new users.', answer: 'T' },
+{ type: 'tf', question: 'Interactive systems should not adapt to the user’s individual needs.', answer: 'F' },
+{ type: 'tf', question: 'Human-Computer Interaction (HCI) is an interdisciplinary field.', answer: 'T' },
+{ type: 'tf', question: 'Prototyping is a method used in the design process to visualize ideas.', answer: 'T' },
+{ type: 'tf', question: 'User experience (UX) encompasses all aspects of the end-user’s interaction with the company, its services, and its products.', answer: 'T' },
+{ type: 'tf', question: 'Effective error messages should only use technical jargon.', answer: 'F' },
+{ type: 'tf', question: 'User research helps designers understand the context of use.', answer: 'T' },
+{ type: 'tf', question: 'Accessibility in design only benefits users with disabilities.', answer: 'F' },
+{ type: 'tf', question: 'Cognitive load refers to the amount of mental effort required to use a system.', answer: 'T' },
+{ type: 'tf', question: 'A persona is a fictional character that represents a user type.', answer: 'T' },
+{ type: 'tf', question: 'Scenarios in design help to envision the context and use of a product.', answer: 'T' },
+{ type: 'tf', question: 'Task analysis breaks down what users need to do to achieve their goals.', answer: 'T' },
+{ type: 'tf', question: 'Information architecture involves organizing and labeling websites to support usability.', answer: 'T' },
+{ type: 'tf', question: 'The term affordance refers to the possible actions that can be performed with an object.', answer: 'T' },
+{ type: 'tf', question: 'User feedback should be ignored during the design process.', answer: 'F' },
+{ type: 'tf', question: 'Wireframes are used to define the structure of a website or application.', answer: 'T' },
+{ type: 'tf', question: 'Responsive design ensures a good user experience across different devices.', answer: 'T' },
+{ type: 'tf', question: 'The iterative design process involves repeating steps to refine and improve the design.', answer: 'T' },
+{ type: 'tf', question: 'A usability test typically involves observing users as they complete tasks.', answer: 'T' },
+{ type: 'tf', question: 'Heuristic evaluation is based on pre-defined usability principles.', answer: 'T' },
+{ type: 'tf', question: 'The user interface (UI) is the point of interaction between the user and a digital device.', answer: 'T' },
+{ type: 'tf', question: 'Cognitive walkthrough involves simulating a user’s problem-solving process at each step in the human-computer dialogue.', answer: 'T' },
+{ type: 'tf', question: 'The goal of HCI is to improve the interactions between users and computers by making computers more usable.', answer: 'T' },
+{ type: 'tf', question: 'User engagement refers to how involved and interested users are with a system.', answer: 'T' },
+{ type: 'tf', question: 'Design guidelines provide concrete suggestions for improving usability.', answer: 'T' },
+{ type: 'tf', question: 'The usability of a system does not affect its overall user satisfaction.', answer: 'F' },
+{ type: 'tf', question: 'HCI considers emotional, cognitive, and physical aspects of users.', answer: 'T' },
+{ type: 'tf', question: 'Designing for HCI involves only visual elements.', answer: 'F' },
+{ type: 'tf', question: 'Feedback in design should be immediate and informative.', answer: 'T' },
+{ type: 'tf', question: 'Norman’s model includes forming goals and evaluating outcomes.', answer: 'T' },
+{ type: 'tf', question: 'Scenario-based design involves creating detailed stories about users and their interactions with the system.', answer: 'T' },
+{ type: 'tf', question: 'Physical ergonomics is unrelated to HCI design.', answer: 'F' },
+{ type: 'tf', question: 'Designing for diversity includes addressing the needs of various cultural groups.', answer: 'T' },
+{ type: 'tf', question: 'User-centered design ignores user feedback during the development process.', answer: 'F' },
+{ type: 'tf', question: 'Empirical methods in evaluation include participants, variables, and hypotheses.', answer: 'T' },
+{ type: 'tf', question: 'Eye tracking is not used for usability evaluation.', answer: 'F' },
+{ type: 'tf', question: 'Universal design principles were proposed in the late 1990s by a group at North Carolina State University.', answer: 'T' },
+{ type: 'tf', question: 'Equitable use in universal design means excluding some users.', answer: 'F' },
+{ type: 'tf', question: 'Flexibility in use allows for adaptivity to the user’s pace and precision.', answer: 'T' },
+{ type: 'tf', question: 'Simple and intuitive use of a design depends on the user’s level of concentration.', answer: 'F' },
+{ type: 'tf', question: 'Perceptible information should not consider environmental conditions.', answer: 'F' },
+{ type: 'tf', question: 'Tolerance for error aims to minimize the impact of mistakes.', answer: 'T' },
+{ type: 'tf', question: 'Low physical effort in design aims to minimize fatigue.', answer: 'T' },
+{ type: 'tf', question: 'Size and space for approach should consider both seated and standing users.', answer: 'T' },
+{ type: 'tf', question: 'Sound in the interface does not contribute to usability.', answer: 'F' },
+{ type: 'tf', question: 'Speech recognition is a type of sound used in the interface.', answer: 'T' },
+{ type: 'tf', question: 'Cutaneous perception is related to tactile sensations.', answer: 'T' },
+{ type: 'tf', question: 'Handwriting recognition is not considered a form of multi-modal interaction.', answer: 'F' },
+{ type: 'tf', question: 'Designing for users with disabilities includes considering visual impairment.', answer: 'T' },
+{ type: 'tf', question: 'Designing for different age groups does not include considering older people.', answer: 'F' },
+{ type: 'tf', question: 'Cultural differences in design can include the direction of writing.', answer: 'T' },
+{ type: 'tf', question: 'Physical ergonomics does not consider the arrangement of controls.', answer: 'F' },
+{ type: 'tf', question: 'The WIMP interface includes windows, icons, menus, and pointing devices.', answer: 'T' },
+{ type: 'tf', question: 'Three-dimensional interfaces are a type of interaction style.', answer: 'T' },
+{ type: 'tf', question: 'Understanding people is crucial in the design process.', answer: 'T' },
+{ type: 'tf', question: 'Evaluation should not occur throughout the design life cycle.', answer: 'F' },
+{ type: 'tf', question: 'Heuristic evaluation was proposed by Jakob Nielsen and Rolf Molich.', answer: 'T' },
+{ type: 'tf', question: 'Recognition rather than recall is not a heuristic evaluation principle.', answer: 'F' },
+{ type: 'tf', question: 'Laboratory studies involve users in a controlled environment.', answer: 'T' },
+{ type: 'tf', question: 'Field studies do not involve observing the system in action in the user’s environment.', answer: 'F' },
+{ type: 'tf', question: 'Think aloud protocols encourage users to criticize the system.', answer: 'T' },
+{ type: 'tf', question: 'Automatic protocol analysis tools cannot log computer activity.', answer: 'F' },
+{ type: 'tf', question: 'Questionnaires are a form of query technique in evaluation.', answer: 'T' },
+{ type: 'tf', question: 'Physiological measurements are used in usability evaluation.', answer: 'T' },
+{ type: 'tf', question: 'Adaptive help systems tailor assistance based on the user’s model.', answer: 'T' },
+{ type: 'tf', question: 'User support design should be seen as an add-on to system design.', answer: 'F' },
+{ type: 'tf', question: 'Online tutorials are a form of command assistance.', answer: 'F' },
+{ type: 'tf', question: 'Consistency is a requirement of user support.', answer: 'T' },
+{ type: 'tf', question: 'Online documentation should avoid jargon as much as possible.', answer: 'T' },
+{ type: 'tf', question: 'Speed is not an important consideration for help system design.', answer: 'F' },
+{ type: 'tf', question: 'The ease of use is a key component of usability.', answer: 'T' },
+{ type: 'tf', question: 'Effectiveness is not a measure of usability.', answer: 'F' },
+{ type: 'tf', question: 'Adaptive help systems do not consider user preferences.', answer: 'F' },
+{ type: 'tf', question: 'The Microsoft Office Assistant was known as ‘Clippy’.', answer: 'T' },
+{ type: 'tf', question: 'Prototyping does not include iterative design and testing.', answer: 'F' },
+{ type: 'tf', question: 'Task analysis helps in understanding user goals and actions.', answer: 'T' },
+{ type: 'tf', question: 'Usability testing is only performed at the end of the design process.', answer: 'F' },
+{ type: 'tf', question: 'Interactive systems must accommodate human error.', answer: 'T' },
+{ type: 'tf', question: 'Design guidelines are not important in HCI.', answer: 'F' },
+{ type: 'tf', question: 'Physical ergonomics considers the use of color.', answer: 'T' },
+{ type: 'tf', question: 'Response time standards are irrelevant in HCI.', answer: 'F' },
+{ type: 'tf', question: 'Cognitive walkthroughs require a complete list of actions for the task.', answer: 'T' },
+{ type: 'tf', question: 'Prototyping is a part of the design process.', answer: 'T' },
+{ type: 'tf', question: 'Universal design principles emphasize equitable use for all users.', answer: 'T' },
+{ type: 'tf', question: 'Flexibility in use is not a principle of universal design.', answer: 'F' },
+{ type: 'tf', question: 'Perceptible information in design should consider environmental conditions.', answer: 'T' },
+{ type: 'tf', question: 'Tolerance for error in design aims to minimize the impact of mistakes.', answer: 'T' },
+{ type: 'tf', question: 'Universal design principles exclude minimizing physical effort.', answer: 'F' },
+{ type: 'tf', question: 'Size and space for approach and use should consider all users regardless of mobility.', answer: 'T' },
+{ type: 'tf', question: 'Multimodal interaction includes sound, touch, and gesture recognition.', answer: 'T' },
+  { type: 'tf', question: 'Speech in interfaces can include both speech recognition and speech synthesis.', answer: 'T' },
+  { type: 'tf', question: 'Non-speech sound is irrelevant in user interfaces.', answer: 'F' },
+  { type: 'tf', question: 'Cutaneous perception refers to tactile sensations through the skin.', answer: 'T' },
+  { type: 'tf', question: 'Handwriting recognition is a form of multimodal interaction.', answer: 'T' },
+  { type: 'tf', question: 'Designing for diversity does not consider visual impairments.', answer: 'F' },
+  { type: 'tf', question: 'User interfaces should be designed differently for children and older people.', answer: 'T' },
+  { type: 'tf', question: 'Cultural differences in design include text direction and symbol usage.', answer: 'T' },
+  { type: 'tf', question: 'Evaluation through user participation is not essential in HCI.', answer: 'F' },
+  { type: 'tf', question: 'Field studies involve observing users in their natural work environment.', answer: 'T' },
+  { type: 'tf', question: 'Think aloud techniques encourage users to criticize the system.', answer: 'T' },
+  { type: 'tf', question: 'Eye tracking is a method used in usability evaluation.', answer: 'T' },
+  { type: 'tf', question: 'Heuristic evaluation is a method that uses pre-defined heuristics.', answer: 'T' },
+  { type: 'tf', question: 'Laboratory studies involve observing users in their normal work environment.', answer: 'F' },
+  { type: 'tf', question: 'Command line interfaces are a type of interaction style.', answer: 'T' },
+  { type: 'tf', question: 'Menus do not fall under interaction styles.', answer: 'F' },
+  { type: 'tf', question: 'Natural language interaction involves typing commands.', answer: 'F' },
+  { type: 'tf', question: 'Form-fills are used in web questionnaires.', answer: 'T' },
+  { type: 'tf', question: 'The WIMP interface includes windows, icons, menus, and pointing devices.', answer: 'T' },
+  { type: 'tf', question: 'Three-dimensional interfaces are not considered in HCI.', answer: 'F' },
+  { type: 'tf', question: 'Design processes must consider user goals and constraints.', answer: 'T' },
+  { type: 'tf', question: 'Understanding computer limitations is part of the design process.', answer: 'T' },
+  { type: 'tf', question: 'Heuristic evaluations do not include error prevention.', answer: 'F' },
+  { type: 'tf', question: 'Consistency and standards are part of heuristic evaluations.', answer: 'T' },
+  { type: 'tf', question: 'Flexibility and efficiency are not considered in heuristic evaluations.', answer: 'F' },
+  { type: 'tf', question: 'Cognitive walkthroughs require a description of the user task.', answer: 'T' },
+  { type: 'tf', question: 'Empirical methods in evaluation include hypothesis testing.', answer: 'T' },
+  { type: 'tf', question: 'Questionnaires are an observational technique.', answer: 'F' },
+  { type: 'tf', question: 'Designing user support systems should consider how help is displayed.', answer: 'T' },
+  { type: 'tf', question: 'Online documentation is an approach to user support.', answer: 'T' },
+  { type: 'tf', question: 'Context-sensitive help is irrelevant in user support.', answer: 'F' },
+  { type: 'tf', question: 'Help systems should be unobtrusive to users.', answer: 'T' },
+  { type: 'tf', question: 'Robustness is not a requirement of user support systems.', answer: 'F' },
+  { type: 'tf', question: 'Adaptive help systems change based on user needs.', answer: 'T' },
+  { type: 'tf', question: 'Online tutorials are a form of adaptive help systems.', answer: 'F' },
+  { type: 'tf', question: 'Help systems should be flexible to accommodate different user needs.', answer: 'T' },
+  { type: 'tf', question: 'Effective presentation of help does not consider user familiarity with language.', answer: 'F' },
+  { type: 'tf', question: 'Implementation decisions for help systems include screen space considerations.', answer: 'T' },
+  { type: 'tf', question: 'User control and freedom are not important in system design.', answer: 'F' },
+  { type: 'tf', question: 'Visibility of system status is a key heuristic.', answer: 'T' },
+  { type: 'tf', question: 'Recognition rather than recall enhances usability.', answer: 'T' },
+  { type: 'tf', question: 'Aesthetic and minimalist design can improve user experience.', answer: 'T' },
+// Multiple Choice Questions
+{ type: 'mc', question: 'What are the three main goals of evaluation in HCI?', options: ['a) Assessing system functionality, user experience, and identifying specific problems', 'b) Developing new features, fixing bugs, and improving design', 'c) Reducing costs, increasing speed, and enhancing security', 'd) Training users, providing support, and documenting processes'], answer: 'a) Assessing system functionality, user experience, and identifying specific problems' },
+{ type: 'mc', question: 'Which method involves taking users out of their normal work environment for controlled tests?', options: ['a) Field studies', 'b) Laboratory studies', 'c) Heuristic evaluation', 'd) Cognitive walkthrough'], answer: 'b) Laboratory studies' },
+{ type: 'mc', question: 'What is a primary focus of heuristic evaluation in HCI?', options: ['a) Testing system performance', 'b) Analyzing system security', 'c) Identifying usability problems', 'd) Developing new interfaces'], answer: 'c) Identifying usability problems' },
+{ type: 'mc', question: 'Which principle of universal design focuses on minimizing the impact of mistakes?', options: ['a) Equitable use', 'b) Flexibility in use', 'c) Perceptible information', 'd) Tolerance for error'], answer: 'd) Tolerance for error' },
+{ type: 'mc', question: 'In the context of HCI, what does "think aloud" technique involve?', options: ['a) Users vocalizing their thoughts while using the system', 'b) Observers interpreting user behavior silently', 'c) Automated system logging', 'd) Eye-tracking users'], answer: 'a) Users vocalizing their thoughts while using the system' },
+{ type: 'mc', question: 'What does the term "cognitive walkthrough" refer to in HCI?', options: ['a) A method to evaluate system performance under stress', 'b) A usability inspection method to evaluate user interfaces', 'c) A process of analyzing user demographics', 'd) A type of user training session'], answer: 'b) A usability inspection method to evaluate user interfaces' },
+{ type: 'mc', question: 'Which of the following is NOT a principle of universal design?', options: ['a) Low physical effort', 'b) Simple and intuitive use', 'c) Minimalism in design', 'd) Size and space for approach and use'], answer: 'c) Minimalism in design' },
+{ type: 'mc', question: 'Which evaluation technique involves users in their normal work environment?', options: ['a) Field studies', 'b) Laboratory studies', 'c) Heuristic evaluation', 'd) Cognitive walkthrough'], answer: 'a) Field studies' },
+{ type: 'mc', question: 'Which method is characterized by users verbalizing their thoughts as they interact with a system?', options: ['a) Cooperative evaluation', 'b) Heuristic evaluation', 'c) Think aloud', 'd) Protocol analysis'], answer: 'c) Think aloud' },
+{ type: 'mc', question: 'What is the focus of adaptive help systems in HCI?', options: ['a) Providing generic help for all users', 'b) Customizing help based on user activity and model', 'c) Reducing system load during help retrieval', 'd) Enhancing graphical interface elements'], answer: 'b) Customizing help based on user activity and model' },
+{ type: 'mc', question: 'What principle of universal design aims to provide effective communication of information regardless of environmental conditions?', options: ['a) Equitable use', 'b) Perceptible information', 'c) Tolerance for error', 'd) Flexibility in use'], answer: 'b) Perceptible information' },
+{ type: 'mc', question: 'Which type of sound is NOT typically used in multi-modal interaction?', options: ['a) Speech recognition', 'b) Speech synthesis', 'c) Non-speech sound', 'd) Ultrasound communication'], answer: 'd) Ultrasound communication' },
+{ type: 'mc', question: 'What is the main goal of heuristic evaluation in HCI?', options: ['a) To perform stress testing', 'b) To identify usability problems quickly and cheaply', 'c) To enhance system security', 'd) To provide extensive user training'], answer: 'b) To identify usability problems quickly and cheaply' },
+{ type: 'mc', question: 'What does "empirical methods" in user participation evaluation involve?', options: ['a) Automated data collection', 'b) Experimental evaluation with variables and hypotheses', 'c) Static code analysis', 'd) Historical data review'], answer: 'b) Experimental evaluation with variables and hypotheses' },
+{ type: 'mc', question: 'Which principle of universal design aims to ensure that the design can be used efficiently and comfortably with minimal fatigue?', options: ['a) Perceptible information', 'b) Flexibility in use', 'c) Low physical effort', 'd) Tolerance for error'], answer: 'c) Low physical effort' },
+{ type: 'mc', question: 'What does the "user control and freedom" heuristic address?', options: ['a) Providing multiple ways to navigate through a system', 'b) Reducing the number of system errors', 'c) Enhancing aesthetic design', 'd) Increasing system response time'], answer: 'a) Providing multiple ways to navigate through a system' },
+{ type: 'mc', question: 'Which of the following is a key component of the cognitive walkthrough method?', options: ['a) User interviews', 'b) Task analysis', 'c) System stress tests', 'd) Automated feedback'], answer: 'b) Task analysis' },
+{ type: 'mc', question: 'What is the main purpose of eye-tracking in usability evaluation?', options: ['a) To enhance system performance', 'b) To understand user attention and visual focus', 'c) To track user physical health', 'd) To replace traditional mouse input'], answer: 'b) To understand user attention and visual focus' },
+{ type: 'mc', question: 'In universal design, what does "flexibility in use" refer to?', options: ['a) Designing systems with adjustable physical components', 'b) Allowing for a range of abilities and preferences in design', 'c) Minimizing the number of system features', 'd) Providing advanced customization options for experts'], answer: 'b) Allowing for a range of abilities and preferences in design' },
+{ type: 'mc', question: 'What is one of the main goals of evaluation in HCI?', options: ['a) To increase system complexity', 'b) To identify specific problems with the system', 'c) To reduce the number of system features', 'd) To enhance graphical design elements'], answer: 'b) To identify specific problems with the system' },
+{ type: 'mc', question: 'Which principle of universal design focuses on providing simple and intuitive use regardless of user experience?', options: ['a) Equitable use', 'b) Flexibility in use', 'c) Simple and intuitive use', 'd) Perceptible information'], answer: 'c) Simple and intuitive use' },
+{ type: 'mc', question: 'What is the purpose of protocol analysis in observational techniques?', options: ['a) To automate system testing', 'b) To record and analyze user behavior', 'c) To develop new user interfaces', 'd) To improve system security'], answer: 'b) To record and analyze user behavior' },
+{ type: 'mc', question: 'Which evaluation method involves experts reviewing a system to identify usability issues?', options: ['a) Heuristic evaluation', 'b) Field studies', 'c) Laboratory studies', 'd) Empirical methods'], answer: 'a) Heuristic evaluation' },
+{ type: 'mc', question: 'What does "equitable use" mean in the context of universal design?', options: ['a) Designing systems that are inexpensive', 'b) Ensuring designs are useful and appealing to people with a range of abilities', 'c) Creating identical experiences for all users', 'd) Focusing on advanced users only'], answer: 'b) Ensuring designs are useful and appealing to people with a range of abilities' },
+{ type: 'mc', question: 'Which technique involves users working alongside evaluators to criticize a system?', options: ['a) Protocol analysis', 'b) Heuristic evaluation', 'c) Cooperative evaluation', 'd) Cognitive walkthrough'], answer: 'c) Cooperative evaluation' },
+{ type: 'mc', question: 'What does "recognition rather than recall" heuristic emphasize in HCI?', options: ['a) Minimizing the need for users to remember information', 'b) Reducing system load time', 'c) Enhancing visual design', 'd) Increasing system security'], answer: 'a) Minimizing the need for users to remember information' },
+{ type: 'mc', question: 'Which principle of universal design ensures that important elements are in the line of sight for both seated and standing users?', options: ['a) Perceptible information', 'b) Flexibility in use', 'c) Size and space for approach and use', 'd) Tolerance for error'], answer: 'c) Size and space for approach and use' },
+{ type: 'mc', question: 'Which method involves evaluators stepping through user tasks to identify usability problems?', options: ['a) Heuristic evaluation', 'b) Cognitive walkthrough', 'c) Field studies', 'd) Protocol analysis'], answer: 'b) Cognitive walkthrough' },
+{ type: 'mc', question: 'What is the primary objective of using sound in multi-modal interaction?', options: ['a) To replace visual information', 'b) To enhance visual information and reduce cognitive load', 'c) To improve system security', 'd) To increase system complexity'], answer: 'b) To enhance visual information and reduce cognitive load' },
+{ type: 'mc', question: 'What does "empirical methods" refer to in the context of evaluation techniques?', options: ['a) Experimental evaluation with control and experimental groups', 'b) Historical data review', 'c) Automated system testing', 'd) Expert reviews'], answer: 'a) Experimental evaluation with control and experimental groups' },
+{ type: 'mc', question: 'Which universal design principle aims to provide the same means of use for all users?', options: ['a) Simple and intuitive use', 'b) Flexibility in use', 'c) Equitable use', 'd) Perceptible information'], answer: 'c) Equitable use' },
+{ type: 'mc', question: 'What is the goal of observational techniques in HCI evaluation?', options: ['a) To automate system testing', 'b) To understand user interaction and behavior', 'c) To improve system aesthetics', 'd) To enhance system security'], answer: 'b) To understand user interaction and behavior' },
+{ type: 'mc', question: 'What does the "user control and freedom" heuristic address in HCI?', options: ['a) Providing system shortcuts for expert users', 'b) Enhancing system aesthetics', 'c) Allowing users to easily undo and redo actions', 'd) Improving system security'], answer: 'c) Allowing users to easily undo and redo actions' },
+{ type: 'mc', question: 'Which principle of universal design refers to providing ways to adapt to the user\'s pace?', options: ['a) Flexibility in use', 'b) Simple and intuitive use', 'c) Low physical effort', 'd) Size and space for approach and use'], answer: 'a) Flexibility in use' },
+{ type: 'mc', question: 'Which method involves users and evaluators working together to identify system issues?', options: ['a) Heuristic evaluation', 'b) Cooperative evaluation', 'c) Cognitive walkthrough', 'd) Field studies'], answer: 'b) Cooperative evaluation' },
+{ type: 'mc', question: 'What does the "match between system and real world" heuristic ensure in HCI?', options: ['a) The system uses technical jargon', 'b) The system uses concepts familiar to the user', 'c) The system focuses on aesthetic design', 'd) The system is optimized for performance'], answer: 'b) The system uses concepts familiar to the user' },
+{ type: 'mc', question: 'Which of the following is a key characteristic of field studies in HCI?', options: ['a) Controlled environment', 'b) Real-world context', 'c) Automated data collection', 'd) Heuristic evaluation'], answer: 'b) Real-world context' },
+{ type: 'mc', question: 'Which principle of universal design focuses on making information easy to understand?', options: ['a) Equitable use', 'b) Simple and intuitive use', 'c) Flexibility in use', 'd) Tolerance for error'], answer: 'b) Simple and intuitive use' },
+{ type: 'mc', question: 'What is the main purpose of heuristic evaluation in HCI?', options: ['a) To test system performance under load', 'b) To identify usability problems quickly and inexpensively', 'c) To conduct extensive user training', 'd) To develop new user interfaces'], answer: 'b) To identify usability problems quickly and inexpensively' },
+{ type: 'mc', question: 'Which principle of universal design is aimed at ensuring the design is easy to use for all people regardless of their abilities?', options: ['a) Equitable use', 'b) Simple and intuitive use', 'c) Flexibility in use', 'd) Low physical effort'], answer: 'a) Equitable use' },
+{ type: 'mc', question: 'What does the "error prevention" heuristic focus on in HCI?', options: ['a) Designing systems to avoid user errors', 'b) Increasing system complexity', 'c) Enhancing system aesthetics', 'd) Reducing system performance issues'], answer: 'a) Designing systems to avoid user errors' },
+{ type: 'mc', question: 'Which of the following is NOT a focus of usability testing in HCI?', options: ['a) Identifying user preferences', 'b) Enhancing system security', 'c) Measuring user performance', 'd) Observing user behavior'], answer: 'b) Enhancing system security' },
+{ type: 'mc', question: 'What is the purpose of the "flexibility in use" principle in universal design?', options: ['a) To reduce system costs', 'b) To accommodate a wide range of individual preferences and abilities', 'c) To simplify system design', 'd) To enhance system aesthetics'], answer: 'b) To accommodate a wide range of individual preferences and abilities' },
+{ type: 'mc', question: 'Which evaluation method in HCI involves users performing tasks in a controlled environment?', options: ['a) Field studies', 'b) Laboratory studies', 'c) Heuristic evaluation', 'd) Cognitive walkthrough'], answer: 'b) Laboratory studies' },
+{ type: 'mc', question: 'Which principle of universal design aims to provide an intuitive interface for all users?', options: ['a) Equitable use', 'b) Simple and intuitive use', 'c) Flexibility in use', 'd) Low physical effort'], answer: 'b) Simple and intuitive use' },
+{ type: 'mc', question: 'What is the primary goal of evaluation in HCI?', options: ['a) To assess the extent and accessibility of the system’s functionality', 'b) To create a new interface design', 'c) To add more features to the system', 'd) To eliminate all user errors'], answer: 'a) To assess the extent and accessibility of the system’s functionality' },
+{ type: 'mc', question: 'Which principle of universal design aims to minimize the impact of mistakes?', options: ['a) Equitable use', 'b) Flexibility in use', 'c) Tolerance for error', 'd) Low physical effort'], answer: 'c) Tolerance for error' },
+{ type: 'mc', question: 'What does Norman’s model primarily address in HCI?', options: ['a) System aesthetics', 'b) Human error', 'c) Interaction design', 'd) Usability testing'], answer: 'b) Human error' },
+{ type: 'mc', question: 'Which interaction style involves a dialog with feedback and control?', options: ['a) Indirect interaction', 'b) Direct interaction', 'c) Batch processing', 'd) Intelligent sensors'], answer: 'b) Direct interaction' },
+{ type: 'mc', question: 'What does "kinesthetics" refer to in multi-modal interaction?', options: ['a) Tactile sensations through the skin', 'b) Perception of movement and position', 'c) Speech recognition', 'd) Audio feedback'], answer: 'b) Perception of movement and position' },
+{ type: 'mc', question: 'What is the purpose of heuristic evaluation?', options: ['a) To identify and fix cosmetic problems', 'b) To evaluate the interface through user participation', 'c) To evaluate the interface based on established usability principles', 'd) To conduct experimental testing'], answer: 'c) To evaluate the interface based on established usability principles' },
+{ type: 'mc', question: 'Which interaction style uses form-fills and spreadsheets?', options: ['a) Command line interface', 'b) Menus', 'c) WIMP interface', 'd) Form-fills and spreadsheets'], answer: 'd) Form-fills and spreadsheets' },
+{ type: 'mc', question: 'What does the principle of "equitable use" in universal design ensure?', options: ['a) Minimizing physical effort', 'b) Design useful to people with a range of abilities', 'c) Effective communication of information', 'd) Adaptivity to the user’s pace'], answer: 'b) Design useful to people with a range of abilities' },
+{ type: 'mc', question: 'Which technique involves users being taken out of their normal work environment for controlled tests?', options: ['a) Field studies', 'b) Cognitive walkthrough', 'c) Laboratory studies', 'd) Think aloud evaluation'], answer: 'c) Laboratory studies' },
+{ type: 'mc', question: 'In evaluation through user participation, what does "think aloud" technique involve?', options: ['a) Users verbalizing their thoughts while performing tasks', 'b) Users filling out questionnaires', 'c) Conducting structured interviews', 'd) Analyzing recorded sessions'], answer: 'a) Users verbalizing their thoughts while performing tasks' },
+{ type: 'mc', question: 'Which of the following is NOT a principle of universal design?', options: ['a) Flexibility in use', 'b) Simple and intuitive use', 'c) High physical effort', 'd) Perceptible information'], answer: 'c) High physical effort' },
+{ type: 'mc', question: 'What is "cognitive walkthrough" primarily used for?', options: ['a) Assessing the physical environment of the interaction', 'b) Identifying usability problems by simulating user tasks', 'c) Designing new interface elements', 'd) Conducting field studies'], answer: 'b) Identifying usability problems by simulating user tasks' },
+{ type: 'mc', question: 'What does "protocol analysis" in observational techniques involve?', options: ['a) Collecting user feedback through surveys', 'b) Analyzing recorded user sessions', 'c) Conducting structured interviews', 'd) Implementing new design changes'], answer: 'b) Analyzing recorded user sessions' },
+{ type: 'mc', question: 'Which evaluation method involves monitoring eye movements?', options: ['a) Think aloud evaluation', 'b) Heuristic evaluation', 'c) Eye tracking', 'd) Cognitive walkthrough'], answer: 'c) Eye tracking' },
+{ type: 'mc', question: 'What is "cutaneous perception" concerned with?', options: ['a) Tactile sensations through the skin', 'b) Visual perception', 'c) Audio feedback', 'd) Kinesthetic perception'], answer: 'a) Tactile sensations through the skin' },
+{ type: 'mc', question: 'In Norman’s model, what is the "goal"?', options: ['a) A specific action required to meet the goal', 'b) The desired output', 'c) The identification of the problem space', 'd) The computational language'], answer: 'b) The desired output' },
+{ type: 'mc', question: 'Which interaction style uses natural language for communication?', options: ['a) Command line interface', 'b) Menus', 'c) WIMP interface', 'd) Natural language'], answer: 'd) Natural language' },
+{ type: 'mc', question: 'Which principle of universal design ensures that the design can be used regardless of the user’s abilities?', options: ['a) Flexibility in use', 'b) Simple and intuitive use', 'c) Perceptible information', 'd) Equitable use'], answer: 'd) Equitable use' },
+{ type: 'mc', question: 'What is the focus of "empirical methods" in user participation evaluation?', options: ['a) Collecting qualitative data', 'b) Observing users in their natural environment', 'c) Conducting experimental evaluations', 'd) Monitoring physiological responses'], answer: 'c) Conducting experimental evaluations' },
+{ type: 'mc', question: 'What is the purpose of "error prevention" in heuristic evaluation?', options: ['a) To improve system aesthetics', 'b) To ensure system flexibility', 'c) To prevent problems from occurring', 'd) To enhance system efficiency'], answer: 'c) To prevent problems from occurring' },
+{ type: 'mc', question: 'What does the "WIMP" interface stand for?', options: ['a) Windows, Icons, Menus, and Pointers', 'b) Web, Internet, Mobile, and PC', 'c) Wide, Intelligent, Multi-purpose, and Portable', 'd) Windows, Information, Menus, and Programs'], answer: 'a) Windows, Icons, Menus, and Pointers' },
+{ type: 'mc', question: 'Which principle of universal design focuses on providing effective communication regardless of conditions?', options: ['a) Tolerance for error', 'b) Perceptible information', 'c) Low physical effort', 'd) Flexibility in use'], answer: 'b) Perceptible information' },
+{ type: 'mc', question: 'What is "automatic protocol analysis tools" used for?', options: ['a) Conducting interviews', 'b) Recording user sessions', 'c) Analyzing user interaction data automatically', 'd) Designing new interface elements'], answer: 'c) Analyzing user interaction data automatically' },
+{ type: 'mc', question: 'In multi-modal interaction, what does "gesture recognition" refer to?', options: ['a) Recognizing touch inputs', 'b) Recognizing user gestures as input', 'c) Recognizing speech commands', 'd) Recognizing visual patterns'], answer: 'b) Recognizing user gestures as input' },
+{ type: 'mc', question: 'Which design process principle emphasizes understanding the materials?', options: ['a) Flexibility in use', 'b) The golden rule of design', 'c) Tolerance for error', 'd) Low physical effort'], answer: 'b) The golden rule of design' },
+{ type: 'mc', question: 'What is the purpose of "evaluation through monitoring physiological responses"?', options: ['a) To assess user satisfaction', 'b) To understand physical reactions during interaction', 'c) To collect user opinions', 'd) To monitor system performance'], answer: 'b) To understand physical reactions during interaction' },
+{ type: 'mc', question: 'Which evaluation technique uses "think aloud" methods?', options: ['a) Protocol analysis', 'b) Cognitive walkthrough', 'c) Heuristic evaluation', 'd) Observational techniques'], answer: 'd) Observational techniques' },
+{ type: 'mc', question: 'What does "adaptive help systems" aim to provide?', options: ['a) General help for all users', 'b) Customized help based on user activity', 'c) Only basic instructions', 'd) Detailed system manuals'], answer: 'b) Customized help based on user activity' },
+{ type: 'mc', question: 'Which of the following is a characteristic of "three-dimensional interfaces"?', options: ['a) Use of natural language', 'b) Use of direct manipulation', 'c) Use of 3D graphics', 'd) Use of form-fills and spreadsheets'], answer: 'c) Use of 3D graphics' },
+{ type: 'mc', question: 'In the context of HCI, what does "task analysis" involve?', options: ['a) Defining the desired output', 'b) Identifying the problem space', 'c) Creating a new interface design', 'd) Understanding how users perform tasks'], answer: 'd) Understanding how users perform tasks' },
+{ type: 'mc', question: 'What is the main goal of the interaction in HCI?', options: ['a) To execute tasks', 'b) To establish a dialog with feedback and control', 'c) To perform batch processing', 'd) To minimize human error'], answer: 'b) To establish a dialog with feedback and control' },
+{ type: 'mc', question: 'What does task analysis involve in HCI?', options: ['a) Identifying goals', 'b) Specifying user actions', 'c) Defining a domain of expertise', 'd) Identifying the problem space'], answer: 'd) Identifying the problem space' },
+{ type: 'mc', question: 'In Norman’s model, what is the first step to achieve a goal?', options: ['a) Forming an intention', 'b) Specifying actions', 'c) Establishing the goal', 'd) Interpreting the result'], answer: 'c) Establishing the goal' },
+{ type: 'mc', question: 'What is the purpose of ergonomics in HCI?', options: ['a) To improve system functionality', 'b) To enhance user experience', 'c) To optimize physical interaction', 'd) To prevent user errors'], answer: 'c) To optimize physical interaction' },
+{ type: 'mc', question: 'What is a key characteristic of a command line interface?', options: ['a) Visual menus', 'b) Natural language interaction', 'c) Typed commands', 'd) Graphical buttons'], answer: 'c) Typed commands' },
+{ type: 'mc', question: 'What is the WIMP interface?', options: ['a) Windows, Icons, Menus, Pointer', 'b) Windows, Internet, Mouse, Protocols', 'c) Web, Interactive, Multi-modal, Pages', 'd) Wireless, Icons, Menus, Processing'], answer: 'a) Windows, Icons, Menus, Pointer' },
+{ type: 'mc', question: 'Which principle of universal design focuses on minimizing the impact of errors?', options: ['a) Flexibility in use', 'b) Simple and intuitive use', 'c) Tolerance for error', 'd) Low physical effort'], answer: 'c) Tolerance for error' },
+{ type: 'mc', question: 'Which type of sound is used in interfaces to confirm modes?', options: ['a) Non-speech sound', 'b) Speech synthesis', 'c) Natural language', 'd) Background music'], answer: 'a) Non-speech sound' },
+{ type: 'mc', question: 'What does kinesthetics refer to in HCI?', options: ['a) Tactile sensations', 'b) Visual feedback', 'c) Movement and position perception', 'd) Auditory cues'], answer: 'c) Movement and position perception' },
+{ type: 'mc', question: 'What is a key consideration when designing for older people in HCI?', options: ['a) High cognitive load', 'b) Fast interaction', 'c) Simplified interfaces', 'd) High physical effort'], answer: 'c) Simplified interfaces' },
+{ type: 'mc', question: 'What is the primary goal of evaluation in HCI?', options: ['a) To create a prototype', 'b) To assess system functionality', 'c) To finalize design', 'd) To document requirements'], answer: 'b) To assess system functionality' },
+{ type: 'mc', question: 'Which evaluation method involves users performing tasks in a controlled environment?', options: ['a) Field studies', 'b) Laboratory studies', 'c) Cognitive walkthroughs', 'd) Heuristic evaluations'], answer: 'b) Laboratory studies' },
+{ type: 'mc', question: 'What is a key advantage of using heuristic evaluation in HCI?', options: ['a) Requires no expert knowledge', 'b) Provides precise numerical data', 'c) Identifies specific usability problems', 'd) Involves real users'], answer: 'c) Identifies specific usability problems' },
+{ type: 'mc', question: 'Which type of observational technique involves verbalizing thoughts while performing tasks?', options: ['a) Protocol analysis', 'b) Think aloud', 'c) Eye tracking', 'd) Questionnaires'], answer: 'b) Think aloud' },
+{ type: 'mc', question: 'What is a primary use of eye tracking in usability evaluation?', options: ['a) Measuring task completion time', 'b) Tracking user emotions', 'c) Monitoring where users look', 'd) Recording verbal responses'], answer: 'c) Monitoring where users look' },
+{ type: 'mc', question: 'Which principle of universal design ensures that the design is useful to people with a range of abilities?', options: ['a) Flexibility in use', 'b) Equitable use', 'c) Simple and intuitive use', 'd) Low physical effort'], answer: 'b) Equitable use' },
+{ type: 'mc', question: 'What does perceptible information refer to in universal design?', options: ['a) Minimizing errors', 'b) Effective communication of information', 'c) Providing multiple usage methods', 'd) Reducing physical effort'], answer: 'b) Effective communication of information' },
+{ type: 'mc', question: 'Which evaluation method involves recording user actions for later analysis?', options: ['a) Cognitive walkthrough', 'b) Heuristic evaluation', 'c) Protocol analysis', 'd) Field studies'], answer: 'c) Protocol analysis' },
+{ type: 'mc', question: 'What is the main goal of the design process in HCI?', options: ['a) Creating aesthetically pleasing interfaces', 'b) Meeting user goals within constraints', 'c) Implementing the latest technology', 'd) Reducing development costs'], answer: 'b) Meeting user goals within constraints' },
+{ type: 'mc', question: 'What is the key focus of usability evaluation methods?', options: ['a) System performance', 'b) User satisfaction', 'c) Design aesthetics', 'd) Cost efficiency'], answer: 'b) User satisfaction' },
+{ type: 'mc', question: 'Which user support method involves providing assistance at the command level?', options: ['a) Online documentation', 'b) Command prompts', 'c) Wizards', 'd) Command assistance'], answer: 'd) Command assistance' },
+{ type: 'mc', question: 'What is the role of online documentation in user support?', options: ['a) Providing task-specific guidance', 'b) Offering full system descriptions', 'c) Leading users through tasks step-by-step', 'd) Adapting to user behavior'], answer: 'b) Offering full system descriptions' },
+{ type: 'mc', question: 'What type of help system monitors user behavior and offers suggestions?', options: ['a) Command assistance', 'b) Online tutorials', 'c) Wizards', 'd) Assistants'], answer: 'd) Assistants' },
+{ type: 'mc', question: 'Which user support method uses hypertext principles to allow users to browse help topics?', options: ['a) Command assistance', 'b) Context-sensitive help', 'c) Online documentation', 'd) Online tutorials'], answer: 'c) Online documentation' },
+{ type: 'mc', question: 'What is a key characteristic of multi-modal systems in HCI?', options: ['a) Use of only visual feedback', 'b) Use of multiple input and output channels', 'c) Reliance on text-based interfaces', 'd) Single-mode interaction'], answer: 'b) Use of multiple input and output channels' },
+{ type: 'mc', question: 'What is a benefit of using multi-modal systems for users with impairments?', options: ['a) Increased system cost', 'b) Complexity of use', 'c) Utilization of effective channels', 'd) Limited accessibility'], answer: 'c) Utilization of effective channels' },
+{ type: 'mc', question: 'Which evaluation method involves observing users in their work environment?', options: ['a) Laboratory studies', 'b) Heuristic evaluation', 'c) Field studies', 'd) Cognitive walkthrough'], answer: 'c) Field studies' },
+{ type: 'mc', question: 'What is the primary purpose of cognitive walkthroughs in HCI?', options: ['a) Assessing system performance', 'b) Evaluating user satisfaction', 'c) Identifying usability problems', 'd) Recording user interactions'], answer: 'c) Identifying usability problems' },
+{ type: 'mc', question: 'What is the main focus of interaction styles in HCI?', options: ['a) System architecture', 'b) User-system communication', 'c) Data processing', 'd) Hardware design'], answer: 'b) User-system communication' },
+{ type: 'mc', question: 'Which interaction style involves users interacting with graphical objects on the screen?', options: ['a) Command line interface', 'b) Natural language', 'c) Point and click', 'd) Form-fills'], answer: 'c) Point and click' },
+{ type: 'mc', question: 'What does tolerance for error in universal design aim to achieve?', options: ['a) Minimizing physical effort', 'b) Reducing the impact of mistakes', 'c) Simplifying usage', 'd) Increasing flexibility'], answer: 'b) Reducing the impact of mistakes' },
+{ type: 'mc', question: 'What is the purpose of using audio confirmation in interfaces?', options: ['a) Enhancing visual feedback', 'b) Providing redundant cues', 'c) Reducing cognitive load', 'd) Increasing user satisfaction'], answer: 'b) Providing redundant cues' },
+{ type: 'mc', question: 'What is a common issue with command line interfaces in HCI?', options: ['a) Lack of flexibility', 'b) High physical effort', 'c) Steep learning curve', 'd) Slow interaction'], answer: 'c) Steep learning curve' },
+{ type: 'mc', question: 'Which principle of universal design ensures the design is easy to understand regardless of the user’s experience?', options: ['a) Flexibility in use', 'b) Equitable use', 'c) Simple and intuitive use', 'd) Perceptible information'], answer: 'c) Simple and intuitive use' },
+{ type: 'mc', question: 'What is the purpose of user modeling in HCI?', options: ['a) Creating system architecture', 'b) Simulating user behavior', 'c) Designing hardware', 'd) Coding the user interface'], answer: 'b) Simulating user behavior' },
+{ type: 'mc', question: 'Which usability principle involves making systems operate within users’ expectations?', options: ['a) Consistency', 'b) Feedback', 'c) Efficiency', 'd) Learnability'], answer: 'a) Consistency' },
+{ type: 'mc', question: 'What does system visibility refer to in HCI?', options: ['a) Making important information easily visible', 'b) Enhancing system aesthetics', 'c) Reducing system complexity', 'd) Improving system performance'], answer: 'a) Making important information easily visible' },
+{ type: 'mc', question: 'What is the key advantage of using prototypes in HCI design?', options: ['a) Reducing development time', 'b) Lowering costs', 'c) Visualizing design concepts', 'd) Minimizing user input'], answer: 'c) Visualizing design concepts' },
+{ type: 'mc', question: 'What is the purpose of a heuristic evaluation?', options: ['a) Gathering quantitative data', 'b) Conducting formal experiments', 'c) Identifying usability issues', 'd) Assessing user satisfaction'], answer: 'c) Identifying usability issues' },
+{ type: 'mc', question: 'Which evaluation method involves users interacting with a system to identify usability issues?', options: ['a) Think aloud', 'b) Heuristic evaluation', 'c) Field study', 'd) Protocol analysis'], answer: 'a) Think aloud' },
+{ type: 'mc', question: 'What does the term “affordance” refer to in HCI?', options: ['a) Aesthetic appeal of an interface', 'b) Functionality of a system', 'c) Usability of an interface', 'd) Perceived and actual properties that determine how an object can be used'], answer: 'd) Perceived and actual properties that determine how an object can be used' },
+{ type: 'mc', question: 'Which type of feedback involves the system providing information to users about their actions?', options: ['a) Positive feedback', 'b) Negative feedback', 'c) Informative feedback', 'd) Directive feedback'], answer: 'c) Informative feedback' },
+{ type: 'mc', question: 'What is the primary focus of user-centered design?', options: ['a) System performance', 'b) User needs and requirements', 'c) Cost reduction', 'd) Aesthetic design'], answer: 'b) User needs and requirements' },
+{ type: 'mc', question: 'What is a key benefit of using contextual inquiry in HCI?', options: ['a) Provides quantitative data', 'b) Involves real users in their environment', 'c) Identifies specific usability issues', 'd) Requires no user involvement'], answer: 'b) Involves real users in their environment' },
+{ type: 'mc', question: 'What does the term “mental model” refer to in HCI?', options: ['a) A representation of a user’s thought process', 'b) The physical layout of an interface', 'c) The system’s underlying architecture', 'd) A blueprint for system design'], answer: 'a) A representation of a user’s thought process' },
+{ type: 'mc', question: 'Which method involves users performing tasks to reveal usability issues?', options: ['a) Heuristic evaluation', 'b) Cognitive walkthrough', 'c) Think aloud', 'd) Field study'], answer: 'c) Think aloud' },
+{ type: 'mc', question: 'Which user support method is designed to help users perform specific tasks step-by-step?', options: ['a) Command assistance', 'b) Online tutorials', 'c) Online documentation', 'd) Assistants'], answer: 'b) Online tutorials' },
+
+];
+
+
+
+
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let selectedTFCount = 0;
+        let selectedMCCount = 0;
+        let selectedQuestions = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateRangeValues();
+            shuffleQuestions();
+        });
+
+        function updateRangeValues() {
+            const tfRange = document.getElementById('tfCount');
+            const mcRange = document.getElementById('mcCount');
+            tfRange.max = questions.filter(q => q.type === 'tf').length;
+            mcRange.max = questions.filter(q => q.type === 'mc').length;
+        }
+
+        function updateValue(id, value) {
+            document.getElementById(id).innerText = value;
+        }
+
+        function shuffleQuestions() {
+            for (let i = questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questions[i], questions[j]] = [questions[j], questions[i]];
+            }
+        }
+
+        function startExam() {
+            selectedTFCount = parseInt(document.getElementById('tfCount').value);
+            selectedMCCount = parseInt(document.getElementById('mcCount').value);
+            selectedQuestions = getSelectedQuestions();
+            userAnswers = new Array(selectedQuestions.length).fill(null);
+            document.getElementById('homeContainer').style.display = 'none';
+            document.getElementById('prevBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+            displayQuestion();
+        }
+
+        function getSelectedQuestions() {
+            const tfQuestions = questions.filter(q => q.type === 'tf').slice(0, selectedTFCount);
+            const mcQuestions = questions.filter(q => q.type === 'mc').slice(0, selectedMCCount);
+            return [...tfQuestions, ...mcQuestions];
+        }
+
+        function displayQuestion() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            const questionObj = selectedQuestions[currentQuestionIndex];
+            const questionElement = document.createElement('div');
+            questionElement.classList.add('question', 'active');
+            questionElement.innerHTML = `<p>Question ${currentQuestionIndex + 1}: ${questionObj.question}</p>`;
+
+            if (questionObj.type === 'tf') {
+                questionElement.innerHTML += `
+                    <label style="display:block;"><input type="radio" name="answer" value="T"> T</label>
+                    <label style="display:block;"><input type="radio" name="answer" value="F"> F</label>
+                `;
+            } else if (questionObj.type === 'mc') {
+                questionObj.options.forEach(option => {
+                    questionElement.innerHTML += `
+                        <label style="display:block;"><input type="radio" name="answer" value="${option}"> ${option}</label>
+                    `;
+                });
+            }
+            container.appendChild(questionElement);
+
+            if (userAnswers[currentQuestionIndex] !== null) {
+                const selectedOption = document.querySelector(`input[name="answer"][value="${userAnswers[currentQuestionIndex]}"]`);
+                if (selectedOption) selectedOption.checked = F;
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                saveAnswer();
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < selectedQuestions.length - 1) {
+                saveAnswer();
+                currentQuestionIndex++;
+                displayQuestion();
+            }
+        }
+
+        function saveAnswer() {
+            const selectedOption = document.querySelector('input[name="answer"]:checked');
+            if (selectedOption) {
+                userAnswers[currentQuestionIndex] = selectedOption.value;
+            }
+        }
+
+        function submitExam() {
+            saveAnswer();
+            let score = 0;
+            let correctAnswers = [];
+            selectedQuestions.forEach((question, index) => {
+                if (userAnswers[index] === question.answer) {
+                    score++;
+                } else {
+                    correctAnswers.push({ question: question.question, correctAnswer: question.answer, userAnswer: userAnswers[index] });
+                }
+            });
+
+            const resultContainer = document.getElementById('resultContainer');
+            resultContainer.innerHTML = `<div class="result">You scored ${score} out of ${selectedQuestions.length}</div>`;
+
+            if (score === selectedQuestions.length) {
+                resultContainer.innerHTML += '<div class="result">Congratulations! You got a perfect score!</div>';
+            } else {
+                correctAnswers.forEach(({ question, correctAnswer, userAnswer }) => {
+                    resultContainer.innerHTML += `
+                        <div class="result">
+                            <p>Question: ${question}</p>
+                            <p>Correct Answer: ${correctAnswer}</p>
+                            <p>Your Answer: ${userAnswer}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('prevBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('homeContainer').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+
+
